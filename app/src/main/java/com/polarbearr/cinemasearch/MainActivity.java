@@ -1,39 +1,88 @@
 package com.polarbearr.cinemasearch;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
+import com.google.gson.Gson;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
+
+    static final String X_NAVER_ID = "X-Naver-Client-Id";
+    static final String X_NAVER_SECRET= "X-Naver-Client-Secret";
+    static final String CLIENT_ID = "aCCmpxUDpSTGU1paDToI";
+    static final String CLIENT_SECRET = "JeXmd4tO4T";
+    static final String URL_KEY = "urlkey";
+
+    RecyclerView recyclerView;
+    MovieInfoAdapter adapter;
+    EditText searchText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final EditText searchText = findViewById(R.id.editText);
+        final Activity activity = this;
+
+        searchText = findViewById(R.id.editText);
         Button button = findViewById(R.id.button);
-        RecyclerView recyclerView = findViewById(R.id.recyclerView);
+
+        recyclerView = findViewById(R.id.recyclerView);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getBaseContext(), LinearLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new MovieInfoAdapter(getApplicationContext());
+        adapter.setOnItemClickListener(new MovieInfoAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(MovieInfoAdapter.ViewHolder holder, View view, int position) {
+                MovieInfo item = adapter.getItem(position);
+                String url = item.getLink();
+                System.out.println(url);
+                startWebView(url);
+            }
+        });
+        recyclerView.setAdapter(adapter);
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String searchWord = searchText.getText().toString();
-                requestSearchWord(searchWord);
+
+                if(searchWord.equals(""))
+                    GreenToast.setCustomToast(getApplicationContext(), R.string.no_searchWord, null);
+                else requestSearchWord(searchWord);
+                hideKeyboard(activity);
             }
         });
     }
 
+    // 데이터 요청
     public void requestSearchWord(String searchWord){
-        String targetUrl = "" + searchWord;
+        final Map<String, String> headers = new HashMap<>();
+        headers.put(X_NAVER_ID, CLIENT_ID);
+        headers.put(X_NAVER_SECRET, CLIENT_SECRET);
+
+        String targetUrl = "https://openapi.naver.com/v1/search/movie.json?query=" + searchWord + "&display=100";
+//        if(sno != 0) targetUrl += "&start=" + sno;
+
         StringRequest request = new StringRequest(
                 Request.Method.GET,
                 targetUrl,
@@ -46,17 +95,60 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener(){
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(getApplicationContext(), "응답 실패", Toast.LENGTH_SHORT).show();
                     }
                 }
-        );
+        ){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError{
+                return headers;
+            }
+        };
 
         request.setShouldCache(false);
-        HttpHelper.getInstance(getBaseContext()).addToRequestQueue(request);
+        HttpHelper.getInstance(getApplicationContext()).addToRequestQueue(request);
     }
 
+    // 응답 처리
     public void processResponse(String response){
-        // TODO : 응답받은 json을 gson으로
+//        System.out.println(response);
+        // 응답받은 json을 gson으로 파싱
+        Gson gson = new Gson();
+        ResponseInfo info = gson.fromJson(response, ResponseInfo.class);
 
-        // TODO : 리사이클러뷰에 어댑터 설정
+        adapter.items.clear();
+
+        // 응답에 영화 정보가 하나라도 있으면 파싱, 어댑터에 추가
+        if(0 < info.total){
+            System.out.println(info.total);
+
+            MovieInfoList movieList = gson.fromJson(response, MovieInfoList.class);
+
+            List<MovieInfo> items = movieList.items;
+
+            adapter.addItems(items);
+            adapter.notifyDataSetChanged();
+//            recyclerView.setAdapter(adapter);
+        } else{
+            adapter.items.clear();
+            adapter.notifyDataSetChanged();
+            GreenToast.setCustomToast(getApplicationContext(), R.string.no_result, searchText.getText().toString());
+        }
+    }
+
+    // 웹뷰 액티비티 실행
+    public void startWebView(String url){
+        Intent intent = new Intent(getBaseContext(), WebViewActivity.class);
+        intent.putExtra(URL_KEY, url);
+        startActivity(intent);
+    }
+
+    // 키보드 숨기기
+    public void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        View view = activity.getCurrentFocus();
+        if (view != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

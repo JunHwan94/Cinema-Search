@@ -3,4 +3,14 @@
     <string name="label1">부스트캠프 사전과제</string>
 
     <string name="search">검색</string>
+
+    <!--아이템 구성요소-->
+    <string name="title">영화 제목</string>
+    <string name="pubDate">개봉 연도</string>
+    <string name="director">감독</string>
+    <string name="actor">배우</string>
+
+    <!--토스트 메세지-->
+    <string name="no_result">검색 결과는 없습니다..</string>
+    <string name="no_searchWord">검색어를 입력해주세요</string>
 </resources>
