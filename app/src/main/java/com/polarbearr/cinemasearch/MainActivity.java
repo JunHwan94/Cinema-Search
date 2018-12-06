@@ -1,7 +1,18 @@
 package com.polarbearr.cinemasearch;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.support.customtabs.CustomTabsClient;
+import android.support.customtabs.CustomTabsIntent;
+import android.support.customtabs.CustomTabsService;
+import android.support.customtabs.CustomTabsServiceConnection;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -29,7 +40,6 @@ public class MainActivity extends AppCompatActivity {
     static final String X_NAVER_SECRET= "X-Naver-Client-Secret";
     static final String CLIENT_ID = "aCCmpxUDpSTGU1paDToI";
     static final String CLIENT_SECRET = "JeXmd4tO4T";
-    static final String URL_KEY = "urlkey";
 
     RecyclerView recyclerView;
     MovieInfoAdapter adapter;
@@ -123,24 +133,24 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(info.total);
 
             MovieInfoList movieList = gson.fromJson(response, MovieInfoList.class);
-
             List<MovieInfo> items = movieList.items;
-
             adapter.addItems(items);
-            adapter.notifyDataSetChanged();
-//            recyclerView.setAdapter(adapter);
         } else{
             adapter.items.clear();
-            adapter.notifyDataSetChanged();
             GreenToast.setCustomToast(getApplicationContext(), R.string.no_result, searchText.getText().toString());
         }
+        adapter.notifyDataSetChanged();
     }
 
-    // 웹뷰 액티비티 실행
+    // 웹뷰 실행
     public void startWebView(String url){
-        Intent intent = new Intent(getBaseContext(), WebViewActivity.class);
-        intent.putExtra(URL_KEY, url);
-        startActivity(intent);
+        Bitmap arrowIcon = BitmapFactory.decodeResource(getResources(), R.drawable.ic_back);
+        CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+        builder.setToolbarColor(getColor(R.color.colorPrimary));
+        builder.setCloseButtonIcon(arrowIcon);
+
+        CustomTabsIntent customTabsIntent = builder.build();
+        customTabsIntent.launchUrl(this, Uri.parse(url));
     }
 
     // 키보드 숨기기
