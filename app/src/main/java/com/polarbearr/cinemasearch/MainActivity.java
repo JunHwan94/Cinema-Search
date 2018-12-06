@@ -1,27 +1,23 @@
 package com.polarbearr.cinemasearch;
 
 import android.app.Activity;
-import android.content.ComponentName;
-import android.content.Intent;
+import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.support.customtabs.CustomTabsClient;
 import android.support.customtabs.CustomTabsIntent;
-import android.support.customtabs.CustomTabsService;
-import android.support.customtabs.CustomTabsServiceConnection;
-import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.SpannableString;
+import android.text.style.RelativeSizeSpan;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -44,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     MovieInfoAdapter adapter;
     EditText searchText;
+    ProgressDialog dialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +51,8 @@ public class MainActivity extends AppCompatActivity {
 
         searchText = findViewById(R.id.editText);
         Button button = findViewById(R.id.button);
-
         recyclerView = findViewById(R.id.recyclerView);
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(getBaseContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
@@ -65,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(MovieInfoAdapter.ViewHolder holder, View view, int position) {
                 MovieInfo item = adapter.getItem(position);
                 String url = item.getLink();
-                System.out.println(url);
                 startWebView(url);
             }
         });
@@ -78,7 +74,10 @@ public class MainActivity extends AppCompatActivity {
 
                 if(searchWord.equals(""))
                     GreenToast.setCustomToast(getApplicationContext(), R.string.no_searchWord, null);
-                else requestSearchWord(searchWord);
+                else {
+                    showProgressDialog();
+                    requestSearchWord(searchWord);
+                }
                 hideKeyboard(activity);
             }
         });
@@ -105,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener(){
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(getApplicationContext(), "응답 실패", Toast.LENGTH_SHORT).show();
+                        GreenToast.setCustomToast(getApplicationContext(), R.string.response_fail, null);
                     }
                 }
         ){
@@ -121,7 +120,6 @@ public class MainActivity extends AppCompatActivity {
 
     // 응답 처리
     public void processResponse(String response){
-//        System.out.println(response);
         // 응답받은 json을 gson으로 파싱
         Gson gson = new Gson();
         ResponseInfo info = gson.fromJson(response, ResponseInfo.class);
@@ -130,16 +128,14 @@ public class MainActivity extends AppCompatActivity {
 
         // 응답에 영화 정보가 하나라도 있으면 파싱, 어댑터에 추가
         if(0 < info.total){
-            System.out.println(info.total);
-
             MovieInfoList movieList = gson.fromJson(response, MovieInfoList.class);
             List<MovieInfo> items = movieList.items;
             adapter.addItems(items);
         } else{
-            adapter.items.clear();
             GreenToast.setCustomToast(getApplicationContext(), R.string.no_result, searchText.getText().toString());
         }
         adapter.notifyDataSetChanged();
+        dialog.cancel();
     }
 
     // 웹뷰 실행
@@ -160,5 +156,22 @@ public class MainActivity extends AppCompatActivity {
         if (view != null) {
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
+    }
+
+    // progressDialog 보여주기
+    public void showProgressDialog(){
+        dialog = new ProgressDialog(this);
+        dialog.setProgressStyle(android.R.attr.progressBarStyleSmall);
+
+        SpannableString message = new SpannableString(getString(R.string.please_wait));
+        message.setSpan(new RelativeSizeSpan(1.5f), 0, message.length(), 0);
+        dialog.setMessage(message);
+
+        dialog.show();
+
+        WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
+        params.width = 900;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        dialog.getWindow().setAttributes(params);
     }
 }

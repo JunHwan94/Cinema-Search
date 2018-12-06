@@ -14,7 +14,7 @@ public class GreenToast {
         if(text != null){
             toastView.setText("'" + text + "'" + context.getText(resource));
             bytes = toastView.getText().toString().getBytes().length;
-            toastView.setWidth(bytes * 18);
+            toastView.setWidth(bytes * 20);
         } else{
             toastView.setText(resource);
             bytes = toastView.getText().toString().getBytes().length;
