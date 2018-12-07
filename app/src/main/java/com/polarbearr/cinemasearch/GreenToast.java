@@ -3,8 +3,12 @@ package com.polarbearr.cinemasearch;
 import android.content.Context;
 import android.graphics.Color;
 import android.view.Gravity;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Map;
 
 public class GreenToast {
     public static void setCustomToast(Context context, int resource, String text){

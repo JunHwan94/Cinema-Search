@@ -47,8 +47,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final Activity activity = this;
-
         searchText = findViewById(R.id.editText);
         Button button = findViewById(R.id.button);
         recyclerView = findViewById(R.id.recyclerView);
@@ -56,6 +54,12 @@ public class MainActivity extends AppCompatActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(getBaseContext(), LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
+        settingAdapter();
+
+        settingButtonListener(button);
+    }
+
+    public void settingAdapter(){
         adapter = new MovieInfoAdapter(getApplicationContext());
         adapter.setOnItemClickListener(new MovieInfoAdapter.OnItemClickListener() {
             @Override
@@ -66,7 +70,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         recyclerView.setAdapter(adapter);
+    }
 
+    public void settingButtonListener(Button button){
+        final Activity activity = this;
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -161,12 +168,10 @@ public class MainActivity extends AppCompatActivity {
     // progressDialog 보여주기
     public void showProgressDialog(){
         dialog = new ProgressDialog(this);
-        dialog.setProgressStyle(android.R.attr.progressBarStyleSmall);
 
         SpannableString message = new SpannableString(getString(R.string.please_wait));
         message.setSpan(new RelativeSizeSpan(1.5f), 0, message.length(), 0);
         dialog.setMessage(message);
-
         dialog.show();
 
         WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
