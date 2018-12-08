@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.polarbearr.cinemasearch.NetworkStatus.TYPE_CONNECTED;
+
 public class MainActivity extends AppCompatActivity {
 
     static final String X_NAVER_ID = "X-Naver-Client-Id";
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
     MovieInfoAdapter adapter;
     EditText searchText;
     ProgressDialog dialog;
+    int netStat;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,10 +68,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(MovieInfoAdapter.ViewHolder holder, View view, int position) {
                 MovieInfo item = adapter.getItem(position);
-                String url = item.getLink();
-                startWebView(url);
+                // 네트워크 연결 검사
+                netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+                if(netStat == TYPE_CONNECTED) {
+                    String url = item.getLink();
+                    startWebView(url);
+                } else GreenToast.setCustomToast(getApplicationContext(), R.string.network_not_connected, null);
             }
         });
+
         recyclerView.setAdapter(adapter);
     }
 
@@ -77,15 +85,19 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String searchWord = searchText.getText().toString();
+                // 네트워크 연결 검사
+                netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
+                if(netStat == TYPE_CONNECTED){
+                    String searchWord = searchText.getText().toString();
 
-                if(searchWord.equals(""))
-                    GreenToast.setCustomToast(getApplicationContext(), R.string.no_searchWord, null);
-                else {
-                    showProgressDialog();
-                    requestSearchWord(searchWord);
-                }
-                hideKeyboard(activity);
+                    if (searchWord.equals(""))
+                        GreenToast.setCustomToast(getApplicationContext(), R.string.no_searchWord, null);
+                    else {
+                        showProgressDialog();
+                        requestSearchWord(searchWord);
+                    }
+                    hideKeyboard(activity);
+                } else GreenToast.setCustomToast(getApplicationContext(), R.string.network_not_connected, null);
             }
         });
     }
