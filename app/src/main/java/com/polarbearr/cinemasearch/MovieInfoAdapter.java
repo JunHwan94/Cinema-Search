@@ -57,7 +57,7 @@ public class MovieInfoAdapter extends RecyclerView.Adapter<MovieInfoAdapter.View
     }
 
     public void addItems(List<MovieInfo> items){
-        this.items = items;
+        this.items.addAll(items);
     }
 
     public MovieInfo getItem(int position) {

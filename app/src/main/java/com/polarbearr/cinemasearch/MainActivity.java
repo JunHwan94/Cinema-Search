@@ -45,6 +45,10 @@ public class MainActivity extends AppCompatActivity {
     ProgressDialog dialog;
     int netStat;
 
+    boolean isFirstSearchRequest = true;
+    int loop;
+    int count;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +89,10 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                isFirstSearchRequest = true;
+                loop = 0;
+                count = 0;
+
                 // 네트워크 연결 검사
                 netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
                 if(netStat == TYPE_CONNECTED){
@@ -94,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                         GreenToast.setCustomToast(getApplicationContext(), R.string.no_searchWord, null);
                     else {
                         showProgressDialog();
-                        requestSearchWord(searchWord);
+                        requestSearchWord(searchWord, 1);
                     }
                     hideKeyboard(activity);
                 } else GreenToast.setCustomToast(getApplicationContext(), R.string.network_not_connected, null);
@@ -103,13 +111,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 데이터 요청
-    public void requestSearchWord(String searchWord){
+    public void requestSearchWord(String searchWord, int sno){
         final Map<String, String> headers = new HashMap<>();
         headers.put(X_NAVER_ID, CLIENT_ID);
         headers.put(X_NAVER_SECRET, CLIENT_SECRET);
 
         String targetUrl = "https://openapi.naver.com/v1/search/movie.json?query=" + searchWord + "&display=100";
-//        if(sno != 0) targetUrl += "&start=" + sno;
+        if(sno != 0) targetUrl += "&start=" + sno;
 
         StringRequest request = new StringRequest(
                 Request.Method.GET,
@@ -139,17 +147,30 @@ public class MainActivity extends AppCompatActivity {
 
     // 응답 처리
     public void processResponse(String response){
-        // 응답받은 json을 gson으로 파싱
+        // 응답받은 json을 gson으로 파싱1
         Gson gson = new Gson();
         ResponseInfo info = gson.fromJson(response, ResponseInfo.class);
 
-        adapter.items.clear();
+        // 새로운 검색 요청을 할 때 비워줌
+        if(isFirstSearchRequest) adapter.items.clear();
 
         // 응답에 영화 정보가 하나라도 있으면 파싱, 어댑터에 추가
         if(0 < info.total){
+            isFirstSearchRequest = false;
+
             MovieInfoList movieList = gson.fromJson(response, MovieInfoList.class);
             List<MovieInfo> items = movieList.items;
             adapter.addItems(items);
+
+            // 요청 반복 횟수 설정
+            loop = info.total / 100;
+            // 설정된 loop보다 요청한 횟수 count가 작아야 또 요청
+            if(0 < loop && count < loop){
+                count++;
+                // 10번 수행시 1000번을 초과하므로 제한
+                if(count < 10) requestSearchWord(searchText.getText().toString(), count * 100 + 1);
+            }
+//            else if(count == 10 || count == loop) adapter.notifyDataSetChanged();
         } else{
             GreenToast.setCustomToast(getApplicationContext(), R.string.no_result, searchText.getText().toString());
         }
