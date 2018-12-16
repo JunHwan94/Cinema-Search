@@ -1,4 +1,4 @@
-package com.polarbearr.cinemasearch;
+package com.polarbearr.cinemasearch.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

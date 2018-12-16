@@ -1,4 +1,4 @@
-package com.polarbearr.cinemasearch;
+package com.polarbearr.cinemasearch.data;
 
 public class MovieInfo{
     String title;

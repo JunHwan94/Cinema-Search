@@ -1,4 +1,4 @@
-package com.polarbearr.cinemasearch;
+package com.polarbearr.cinemasearch.network;
 
 import android.content.Context;
 

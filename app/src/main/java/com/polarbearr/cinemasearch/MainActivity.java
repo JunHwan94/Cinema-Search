@@ -2,6 +2,7 @@ package com.polarbearr.cinemasearch;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.databinding.DataBindingUtil;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -9,7 +10,6 @@ import android.support.customtabs.CustomTabsIntent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.text.SpannableString;
 import android.text.style.RelativeSizeSpan;
 import android.view.View;
@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.EditText;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -25,12 +24,19 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.google.gson.Gson;
+import com.polarbearr.cinemasearch.data.MovieInfo;
+import com.polarbearr.cinemasearch.data.MovieInfoList;
+import com.polarbearr.cinemasearch.data.ResponseInfo;
+import com.polarbearr.cinemasearch.databinding.ActivityMainBinding;
+import com.polarbearr.cinemasearch.network.HttpHelper;
+import com.polarbearr.cinemasearch.utils.GreenToast;
+import com.polarbearr.cinemasearch.utils.NetworkStatus;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.polarbearr.cinemasearch.NetworkStatus.TYPE_CONNECTED;
+import static com.polarbearr.cinemasearch.utils.NetworkStatus.TYPE_CONNECTED;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -38,10 +44,9 @@ public class MainActivity extends AppCompatActivity {
     static final String X_NAVER_SECRET= "X-Naver-Client-Secret";
     static final String CLIENT_ID = "aCCmpxUDpSTGU1paDToI";
     static final String CLIENT_SECRET = "JeXmd4tO4T";
+    ActivityMainBinding binding;
 
-    RecyclerView recyclerView;
     MovieInfoAdapter adapter;
-    EditText searchText;
     ProgressDialog dialog;
     int netStat;
 
@@ -52,18 +57,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
-        searchText = findViewById(R.id.editText);
-        Button button = findViewById(R.id.button);
-        recyclerView = findViewById(R.id.recyclerView);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        binding.setLifecycleOwner(this);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getBaseContext(), LinearLayoutManager.VERTICAL, false);
-        recyclerView.setLayoutManager(layoutManager);
+        binding.recyclerView.setLayoutManager(layoutManager);
 
         settingAdapter();
 
-        settingButtonListener(button);
+        settingButtonListener(binding.button);
     }
 
     public void settingAdapter(){
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        recyclerView.setAdapter(adapter);
+        binding.recyclerView.setAdapter(adapter);
     }
 
     public void settingButtonListener(Button button){
@@ -96,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 // 네트워크 연결 검사
                 netStat = NetworkStatus.getConnectivityStatus(getApplicationContext());
                 if(netStat == TYPE_CONNECTED){
-                    String searchWord = searchText.getText().toString();
+                    String searchWord = binding.etSearchWord.getText().toString();
 
                     if (searchWord.equals(""))
                         GreenToast.setCustomToast(getApplicationContext(), R.string.no_searchWord, null);
@@ -131,7 +133,18 @@ public class MainActivity extends AppCompatActivity {
                 new Response.ErrorListener(){
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        GreenToast.setCustomToast(getApplicationContext(), R.string.response_fail, null);
+
+                        switch(error.networkResponse.statusCode){
+                            case 400:
+                                GreenToast.setCustomToast(getApplicationContext(), R.string.wrong_request, null);
+                                break;
+                            case 404:
+                                GreenToast.setCustomToast(getApplicationContext(), R.string.no_api, null);
+                                break;
+                            case 500:
+                                GreenToast.setCustomToast(getApplicationContext(), R.string.server_error, null);
+                                break;
+                        }
                     }
                 }
         ){
@@ -147,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
 
     // 응답 처리
     public void processResponse(String response){
-        // 응답받은 json을 gson으로 파싱1
+        // 응답받은 json을 gson으로 파싱
         Gson gson = new Gson();
         ResponseInfo info = gson.fromJson(response, ResponseInfo.class);
 
@@ -163,16 +176,16 @@ public class MainActivity extends AppCompatActivity {
             adapter.addItems(items);
 
             // 요청 반복 횟수 설정
-            loop = info.total / 100;
+            if(loop == 0) loop = info.total / 100;
             // 설정된 loop보다 요청한 횟수 count가 작아야 또 요청
             if(0 < loop && count < loop){
                 count++;
                 // 10번 수행시 1000번을 초과하므로 제한
-                if(count < 10) requestSearchWord(searchText.getText().toString(), count * 100 + 1);
+                if(count < 10)
+                    requestSearchWord(binding.etSearchWord.getText().toString(), count * 100 + 1);
             }
-//            else if(count == 10 || count == loop) adapter.notifyDataSetChanged();
         } else{
-            GreenToast.setCustomToast(getApplicationContext(), R.string.no_result, searchText.getText().toString());
+            GreenToast.setCustomToast(getApplicationContext(), R.string.no_result, binding.etSearchWord.getText().toString());
         }
         adapter.notifyDataSetChanged();
         dialog.cancel();

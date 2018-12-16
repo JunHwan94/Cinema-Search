@@ -1,4 +1,4 @@
-package com.polarbearr.cinemasearch;
+package com.polarbearr.cinemasearch.data;
 
 import java.util.ArrayList;
 import java.util.List;

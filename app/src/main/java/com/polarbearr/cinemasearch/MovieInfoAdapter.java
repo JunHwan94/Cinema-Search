@@ -1,23 +1,22 @@
 package com.polarbearr.cinemasearch;
 
 import android.content.Context;
+import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.RatingBar;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.polarbearr.cinemasearch.data.MovieInfo;
+import com.polarbearr.cinemasearch.databinding.MovieinfoItemBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MovieInfoAdapter extends RecyclerView.Adapter<MovieInfoAdapter.ViewHolder>{
-
     static Context context;
     List<MovieInfo> items = new ArrayList<>();
 
@@ -69,24 +68,12 @@ public class MovieInfoAdapter extends RecyclerView.Adapter<MovieInfoAdapter.View
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder{
-        ImageView imgPoster;
-        TextView tvTitle;
-        RatingBar ratingBar;
-        TextView tvPubDate;
-        TextView tvDirector;
-        TextView tvActor;
+        MovieinfoItemBinding binding = DataBindingUtil.bind(itemView);
 
         OnItemClickListener listener;
 
         public ViewHolder(View itemView){
             super(itemView);
-
-            imgPoster = itemView.findViewById(R.id.poster);
-            tvTitle = itemView.findViewById(R.id.title);
-            ratingBar = itemView.findViewById(R.id.ratingBar);
-            tvPubDate = itemView.findViewById(R.id.pubDate);
-            tvDirector = itemView.findViewById(R.id.director);
-            tvActor = itemView.findViewById(R.id.actor);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -102,16 +89,16 @@ public class MovieInfoAdapter extends RecyclerView.Adapter<MovieInfoAdapter.View
 
         public void setItem(MovieInfo item){
             String imgUrl = item.getImageUrl();
-            Glide.with(context).load(imgUrl).into(imgPoster);
+            Glide.with(context).load(imgUrl).into(binding.imgvPoster);
 
-            tvTitle.setText(Html.fromHtml(item.getTitle()));
+            binding.tvTitle.setText(Html.fromHtml(item.getTitle()));
 
             float userRating = (float)Math.round(item.getUserRating()) / 2;
-            ratingBar.setRating(userRating);
+            binding.ratingBar.setRating(userRating);
 
-            tvPubDate.setText(item.getPubDate());
-            tvDirector.setText(item.getDirector());
-            tvActor.setText(item.getActor());
+            binding.tvPubDate.setText(item.getPubDate());
+            binding.tvDirector.setText(item.getDirector());
+            binding.tvActor.setText(item.getActor());
         }
 
         public void setOnItemClickListener(OnItemClickListener listener){

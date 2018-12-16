@@ -14,6 +14,9 @@
     <string name="no_searchWord">검색어를 입력해주세요</string>
     <string name="response_fail">응답 실패</string>
     <string name="network_not_connected">네트워크 연결을 확인하세요</string>
+    <string name="wrong_request">잘못된 요청입니다</string>
+    <string name="no_api">존재하지 않는 API입니다</string>
+    <string name="server_error">서버 에러 발생</string>
 
     <string name="please_wait">잠시만요..</string>
 </resources>

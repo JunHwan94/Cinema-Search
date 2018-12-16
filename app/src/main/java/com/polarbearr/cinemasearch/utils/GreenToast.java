@@ -1,10 +1,12 @@
-package com.polarbearr.cinemasearch;
+package com.polarbearr.cinemasearch.utils;
 
 import android.content.Context;
 import android.graphics.Color;
 import android.view.Gravity;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.polarbearr.cinemasearch.R;
 
 public class GreenToast {
     public static void setCustomToast(Context context, int resource, String text){
